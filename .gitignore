@@ -1,0 +1,11 @@
+workspace/*
+data/*
+logs/*
+!workspace/.gitkeep
+!data/.gitkeep
+!logs/.gitkeep
+*.sqlite
+*.db
+.env
+.venv/
+__pycache__/
