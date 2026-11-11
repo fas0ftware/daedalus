@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="244" viewBox="0 0 720 244">
+<rect width="100%" height="100%" rx="10" fill="#0d1117" stroke="#30363d"/>
+<rect width="100%" height="32" rx="10" fill="#161b22"/><rect y="22" width="100%" height="10" fill="#161b22"/>
+<circle cx="18" cy="16" r="6" fill="#ff5f56"/><circle cx="38" cy="16" r="6" fill="#ffbd2e"/><circle cx="58" cy="16" r="6" fill="#27c93f"/>
+<text x="360" y="21" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" text-anchor="middle">daedalus — sandbox isolation check (live Docker)</text>
+<g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" xml:space="preserve">
+<text x="14" y="56" fill="#58a6ff">$ run_python(&lt;isolation check&gt;)</text>
+<text x="14" y="74" fill="#e6edf3">uid: 1000 | pandas 3.1.1</text>
+<text x="14" y="92" fill="#e6edf3">network: blocked</text>
+<text x="14" y="110" fill="#e6edf3">root filesystem: read-only</text>
+<text x="14" y="128" fill="#58a6ff">$ run_python(&#x27;print(open(&quot;notes.txt&quot;).read())&#x27;)</text>
+<text x="14" y="146" fill="#e6edf3">persisted between runs</text>
+<text x="14" y="164" fill="#3fb950">$ run_python(&#x27;while True: pass&#x27;)   # 3 s limit</text>
+<text x="14" y="182" fill="#e6edf3">[killed after 3s] | timed_out = True</text>
+<text x="14" y="200" fill="#58a6ff">$ run_python(&#x27;x = bytearray(600 MB)&#x27;)</text>
+<text x="14" y="218" fill="#e6edf3">exit code 137 -&gt; killed by the 256 MB memory limit</text>
+</g></svg>

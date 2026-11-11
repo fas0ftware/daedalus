@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="826" height="460" viewBox="0 0 826 460">
+<rect width="100%" height="100%" rx="10" fill="#0d1117" stroke="#30363d"/>
+<rect width="100%" height="32" rx="10" fill="#161b22"/><rect y="22" width="100%" height="10" fill="#161b22"/>
+<circle cx="18" cy="16" r="6" fill="#ff5f56"/><circle cx="38" cy="16" r="6" fill="#ffbd2e"/><circle cx="58" cy="16" r="6" fill="#27c93f"/>
+<text x="413" y="21" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" text-anchor="middle">daedalus — pytest</text>
+<g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" xml:space="preserve">
+<text x="14" y="56" fill="#58a6ff">$ python -m pytest -v</text>
+<text x="14" y="74" fill="#e6edf3">============================= test session starts ==============================</text>
+<text x="14" y="92" fill="#e6edf3">platform linux -- Python 3.14.4, pytest-9.2.0, pluggy-1.7.0 -- python</text>
+<text x="14" y="110" fill="#e6edf3">rootdir: .</text>
+<text x="14" y="128" fill="#e6edf3">plugins: anyio-4.16.0, platformdirs-4.14.5</text>
+<text x="14" y="146" fill="#e6edf3">collecting ... collected 13 items</text>
+<text x="14" y="164" fill="#e6edf3"></text>
+<text x="14" y="182" fill="#3fb950">tests/test_daedalus.py::test_plain_answer PASSED                         [  7%]</text>
+<text x="14" y="200" fill="#3fb950">tests/test_daedalus.py::test_tool_loop_runs_code_and_returns_results_in_one_message PASSED [ 15%]</text>
+<text x="14" y="218" fill="#3fb950">tests/test_daedalus.py::test_failed_run_is_marked_as_error PASSED        [ 23%]</text>
+<text x="14" y="236" fill="#3fb950">tests/test_daedalus.py::test_step_limit_stops_runaway_loops PASSED       [ 30%]</text>
+<text x="14" y="254" fill="#3fb950">tests/test_daedalus.py::test_invalid_tool_input_is_not_executed PASSED   [ 38%]</text>
+<text x="14" y="272" fill="#3fb950">tests/test_daedalus.py::test_refusal_pause_and_max_tokens PASSED         [ 46%]</text>
+<text x="14" y="290" fill="#3fb950">tests/test_daedalus.py::test_history_is_kept_trimmed_and_valid PASSED    [ 53%]</text>
+<text x="14" y="308" fill="#3fb950">tests/test_daedalus.py::test_docker_command_is_locked_down PASSED        [ 61%]</text>
+<text x="14" y="326" fill="#3fb950">tests/test_daedalus.py::test_run_python_paths PASSED                     [ 69%]</text>
+<text x="14" y="344" fill="#3fb950">tests/test_daedalus.py::test_truncate_and_workspace PASSED               [ 76%]</text>
+<text x="14" y="362" fill="#3fb950">tests/test_daedalus.py::test_access_and_rate_limit PASSED                [ 84%]</text>
+<text x="14" y="380" fill="#3fb950">tests/test_daedalus.py::test_settings PASSED                             [ 92%]</text>
+<text x="14" y="398" fill="#3fb950">tests/test_daedalus.py::test_chunks PASSED                               [100%]</text>
+<text x="14" y="416" fill="#e6edf3"></text>
+<text x="14" y="434" fill="#3fb950">============================== 13 passed in 0.03s ==============================</text>
+</g></svg>

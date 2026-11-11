@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="745" height="316" viewBox="0 0 745 316">
+<rect width="100%" height="100%" rx="10" fill="#0d1117" stroke="#30363d"/>
+<rect width="100%" height="32" rx="10" fill="#161b22"/><rect y="22" width="100%" height="10" fill="#161b22"/>
+<circle cx="18" cy="16" r="6" fill="#ff5f56"/><circle cx="38" cy="16" r="6" fill="#ffbd2e"/><circle cx="58" cy="16" r="6" fill="#27c93f"/>
+<text x="372" y="21" fill="#8b949e" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" text-anchor="middle">daedalus — security scan</text>
+<g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" xml:space="preserve">
+<text x="14" y="56" fill="#58a6ff">$ bandit -r . -x ./tests</text>
+<text x="14" y="74" fill="#e6edf3">Test results:</text>
+<text x="14" y="92" fill="#3fb950">    No issues identified.</text>
+<text x="14" y="110" fill="#e6edf3">    Total lines of code: 304</text>
+<text x="14" y="128" fill="#e6edf3">    Total issues (by severity):</text>
+<text x="14" y="146" fill="#e6edf3">        Low: 0</text>
+<text x="14" y="164" fill="#e6edf3">        Medium: 0</text>
+<text x="14" y="182" fill="#e6edf3">        High: 0</text>
+<text x="14" y="200" fill="#e6edf3"></text>
+<text x="14" y="218" fill="#58a6ff">$ pip-audit -r requirements.txt</text>
+<text x="14" y="236" fill="#3fb950">No known vulnerabilities found</text>
+<text x="14" y="254" fill="#e6edf3"></text>
+<text x="14" y="272" fill="#58a6ff">$ secret scan (git history, 3 commits)</text>
+<text x="14" y="290" fill="#e6edf3">No secrets found (AWS, GitHub, OpenAI/Anthropic, Google, Slack, Telegram, private keys)</text>
+</g></svg>
