@@ -169,3 +169,158 @@ def test_chunks():
     parts = chunks("line\n" * 2000 + "y" * 9000)
     assert all(len(p) <= 4000 for p in parts)
     assert "".join(parts) == "line\n" * 2000 + "y" * 9000
+
+
+# --- robustness ----------------------------------------------------------------------
+
+def thinking(sig="sig"):
+    return NS(type="thinking", thinking="", signature=sig)
+
+
+def test_model_that_ignores_the_step_limit_is_stopped():
+    # Claude keeps calling the tool forever: the loop must end, and the stored history
+    # must stay valid (every tool_use answered) for the next request.
+    endless = [NS(stop_reason="tool_use", content=[tool(f"t{i}", "x")]) for i in range(50)]
+    a, client, runs = agent(endless, max_steps=3)
+    reply = a.ask("go")
+    assert reply.stop_reason == "step_limit" and len(runs) == 3
+    assert len(client.calls) <= 3 + 3  # max_steps + EXTRA_ROUNDS_AFTER_LIMIT + 1
+    ids = {b.id for m in a.history if m["role"] == "assistant" and not isinstance(m["content"], str)
+           for b in m["content"] if getattr(b, "type", None) == "tool_use"}
+    answered = {r["tool_use_id"] for m in a.history if m["role"] == "user" and isinstance(m["content"], list)
+                for r in m["content"]}
+    assert ids <= answered
+
+
+def test_endless_pause_turn_is_capped():
+    a, client, _ = agent([NS(stop_reason="pause_turn", content=[text("…")])] * 20)
+    a.ask("x")
+    assert len(client.calls) <= 6
+
+
+def test_history_is_rolled_back_when_a_request_fails():
+    class Boom(Exception):
+        pass
+
+    responses = [NS(stop_reason="tool_use", content=[tool("t1", "x")])]
+    a, client, _ = agent(responses, runner=lambda c: (_ for _ in ()).throw(Boom()))
+    a.history = [{"role": "user", "content": "earlier"}, {"role": "assistant", "content": [text("ok")]}]
+    before = list(a.history)
+    with pytest.raises(Boom):
+        a.ask("run it")
+    assert a.history == before  # no dangling tool_use left behind
+
+
+def test_trim_removes_thinking_blocks_and_stays_valid():
+    responses = [NS(stop_reason="end_turn", content=[thinking(), text(str(i))]) for i in range(60)]
+    a, client, _ = agent(responses)
+    for i in range(60):
+        a.ask(f"q{i}")
+        assert len(a.history) <= MAX_HISTORY_MESSAGES
+    trimmed_once = any(len(c["messages"]) < 2 * i + 1 for i, c in enumerate(client.calls))
+    assert trimmed_once
+    # After the last trim the remaining (older) assistant turns carry no thinking blocks.
+    last = client.calls[-1]["messages"]
+    first = last[0]
+    assert first["role"] == "user" and isinstance(first["content"], str)
+
+
+def test_trim_strips_thinking_from_kept_turns():
+    a, _, _ = agent([])
+    a.history = []
+    for i in range(MAX_HISTORY_MESSAGES // 2 + 1):
+        a.history.append({"role": "user", "content": f"q{i}"})
+        a.history.append({"role": "assistant", "content": [thinking(), text(str(i))]})
+    a._trim()
+    assert len(a.history) <= MAX_HISTORY_MESSAGES // 2
+    for m in a.history:
+        if m["role"] == "assistant":
+            assert all(b.type != "thinking" for b in m["content"])
+
+
+def test_settings_numbers_are_validated():
+    env = {"TELEGRAM_TOKEN": "t", "ALLOWED_USER_ID": "1", "ANTHROPIC_API_KEY": "k"}
+    assert load_settings({**env, "DAEDALUS_SANDBOX_TIMEOUT": "45"}).sandbox_timeout == 45
+    for bad in ({"DAEDALUS_SANDBOX_TIMEOUT": "abc"}, {"DAEDALUS_SANDBOX_TIMEOUT": "0"},
+                {"DAEDALUS_REQUESTS_PER_HOUR": "-1"}, {"ALLOWED_USER_ID": ","}):
+        with pytest.raises(ValueError):
+            load_settings({**env, **bad})
+
+
+def test_killed_run_mentions_both_limits(tmp_path):
+    r = run_python("x", "img", str(tmp_path), 5, runner=lambda *a, **k: NS(returncode=137, stdout="", stderr=""))
+    assert "memory" in r.output and "time" in r.output
+
+
+def test_concurrent_messages_in_one_chat_are_serialized(monkeypatch):
+    """Two messages at once must not run the same Agent in two threads."""
+    import asyncio
+    import sys
+    import threading
+    import types
+
+    pytest.importorskip("telegram")
+    from app.handlers import telegram as tg
+
+    active, overlap = [0], [False]
+    gate = threading.Lock()
+
+    class SlowAgent:
+        def __init__(self, *a, **k):
+            pass
+
+        def ask(self, text):
+            with gate:
+                active[0] += 1
+                overlap[0] |= active[0] > 1
+            import time
+            time.sleep(0.05)
+            with gate:
+                active[0] -= 1
+            return NS(text="ok", runs=[])
+
+        def reset(self):
+            pass
+
+    monkeypatch.setattr(tg, "Agent", SlowAgent)
+    handlers = {}
+
+    class FakeApp:
+        def add_handler(self, h):
+            handlers[type(h).__name__ + str(len(handlers))] = h
+
+    class FakeBuilder:
+        def token(self, t):
+            return self
+
+        def build(self):
+            return FakeApp()
+
+    monkeypatch.setattr("telegram.ext.ApplicationBuilder", FakeBuilder)
+    settings = load_settings({"TELEGRAM_TOKEN": "t", "ALLOWED_USER_ID": "7", "ANTHROPIC_API_KEY": "k"})
+    settings = type(settings)(**{**settings.__dict__, "workspace": str(__import__("tempfile").mkdtemp())})
+    tg.build_app(settings, client=None)
+    on_text = [h for h in handlers.values() if type(h).__name__ == "MessageHandler"][0].callback
+
+    sent = []
+
+    class Msg:
+        def __init__(self, t):
+            self.text = t
+
+        async def reply_text(self, t):
+            sent.append(t)
+
+    def update(t):
+        return NS(effective_message=Msg(t), message=None, effective_user=NS(id=7), effective_chat=NS(id=1))
+
+    async def action(*a, **k):
+        pass
+
+    context = NS(bot=NS(send_chat_action=action))
+
+    async def main():
+        await asyncio.gather(on_text(update("a"), context), on_text(update("b"), context))
+    asyncio.run(main())
+    assert not overlap[0]
+    assert sent.count("ok") == 2

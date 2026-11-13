@@ -1,7 +1,7 @@
 # Daedalus
 
 [![CI](https://github.com/fas0ftware/daedalus/actions/workflows/ci.yml/badge.svg)](https://github.com/fas0ftware/daedalus/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![Version](https://img.shields.io/badge/version-0.1.1-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-yellow)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -21,7 +21,10 @@ Telegram ──► owner check, rate limit ──► Agent (Claude Messages API,
 ```
 
 - One conversation per chat (`/reset` starts over), trimmed so it never grows without bound.
-- At most 8 sandbox runs per request, then Claude must answer with what it has.
+- At most 8 sandbox runs per request, then Claude must answer with what it has; if it keeps calling the tool anyway, the request is stopped.
+- One request at a time per chat: a second message waits for the first instead of mixing into its conversation.
+- If a request fails (API or Docker error), the conversation is restored to how it was, so the chat keeps working.
+- When the history is trimmed, older thinking blocks are dropped too, so newer models (e.g. `claude-opus-5-5`) accept the trimmed conversation.
 - Long answers are split under Telegram's message limit.
 
 ## Security
@@ -53,7 +56,7 @@ python -m app.main
 
 ## Tests
 
-The agent loop is tested against a fake Claude client (tool calls, results returned together, error results, step limit, refusals, paused and truncated turns, history trimming) and the sandbox command and wrapper without Docker; the isolation check above was run against real Docker.
+The agent loop is tested against a fake Claude client (tool calls, results returned together, error results, step limit and runaway loops, refusals, paused and truncated turns, history trimming, rollback after errors, one request at a time per chat) and the sandbox command and wrapper without Docker; the isolation check above was run against real Docker.
 
 ```bash
 pip install -r requirements-dev.txt && python -m pytest -v
@@ -77,6 +80,7 @@ sandbox/Dockerfile        sandbox image (Python 3.12, numpy, pandas)
 
 ## Changelog
 
+- **0.1.1** – Fixes: concurrent messages in one chat no longer corrupt the conversation; a failed request no longer breaks the chat; a model that ignores the step limit is stopped; history trimming is accepted by newer models; edited messages no longer crash the handler; numeric settings are validated; workspace is writable when run as root.
 - **0.1.0** – First working version: Telegram bot, Claude agent with a sandboxed Python tool, owner-only access, rate limit, tests, CI. (Before: an empty skeleton.)
 
 ---
