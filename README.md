@@ -1,11 +1,15 @@
 # Daedalus
 
 [![CI](https://github.com/fas0ftware/daedalus/actions/workflows/ci.yml/badge.svg)](https://github.com/fas0ftware/daedalus/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.1.2-blue)
+![Version](https://img.shields.io/badge/version-0.2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-yellow)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-A personal coding assistant on Telegram, powered by Claude. Ask a coding question or give it a task; when running code helps (calculations, checking a snippet, data wrangling) it executes Python in a **locked-down Docker sandbox** and answers with the verified result. It is the "heavy work" partner of the JUDA home assistant.
+A personal coding assistant on Telegram and in the browser, powered by Claude. Ask a coding question or give it a task; when running code helps (calculations, checking a snippet, data wrangling) it executes Python in a **locked-down Docker sandbox** and answers with the verified result. It is the "heavy work" partner of the JUDA home assistant.
+
+![Daedalus Web: two answers, each with the sandbox run that verified it, and the chat folder with the file the code wrote](docs/web.png)
+
+<sub>Daedalus Web with `--demo`: the replies are scripted, the code really ran in the Docker sandbox.</sub>
 
 ![Sandbox isolation check](docs/sandbox.svg)
 
@@ -55,9 +59,24 @@ python -m app.main
 | `DAEDALUS_REQUESTS_PER_HOUR` | 30 | rate limit |
 | `DAEDALUS_SANDBOX_TIMEOUT` | 20 | seconds per code run |
 
+### Web interface
+
+```bash
+python -m app.web             # http://127.0.0.1:8745, needs ANTHROPIC_API_KEY and Docker, no Telegram token
+python -m app.web --demo      # no API key: two scripted questions, the code still runs in the sandbox
+```
+
+Chats in a sidebar, each with its own sandbox folder (`workspace/chat-9000001`, ...). Every answer
+shows the sandbox runs behind it: output and exit code, and the exact code on demand. Files
+the code wrote can be downloaded. Same agent, sandbox and limits as the bot; one request at a
+time per chat. It listens on 127.0.0.1 only, accepts requests only from its own page (Host and
+Origin checks), sends a strict Content-Security-Policy and renders model output as text (code
+blocks are built as elements, never as HTML). Downloads are limited to plain files directly in
+the chat's folder.
+
 ## Tests
 
-The agent loop is tested against a fake Claude client (tool calls, results returned together, error results, step limit and runaway loops, refusals, paused and truncated turns, history trimming, rollback after errors, one request at a time per chat) and the sandbox command and wrapper without Docker; the isolation check above was run against real Docker.
+The agent loop is tested against a fake Claude client (tool calls, results returned together, error results, step limit and runaway loops, refusals, paused and truncated turns, history trimming, rollback after errors, one request at a time per chat), the sandbox command and wrapper without Docker, and the web interface (runs shown with their code, errors kept in the chat, busy chats, the demo script, web settings, file downloads that cannot leave the chat folder, Host/Origin guards); the isolation check above was run against real Docker.
 
 ```bash
 pip install -r requirements-dev.txt && python -m pytest -v
@@ -76,10 +95,14 @@ app/security.py           owner check, rate limit, input checks
 app/sandbox.py            Docker sandbox runner
 app/agent/core.py         Claude tool-use loop with the run_python tool
 app/handlers/telegram.py  Telegram commands and messages
+app/web.py, web_base.py   Daedalus Web (local browser interface)
+app/static/               its page, script and styles
 sandbox/Dockerfile        sandbox image (Python 3.12, numpy, pandas)
 ```
 
 ## Changelog
+
+- **0.2.0** – Daedalus Web: the assistant in the browser with chats, sandbox runs shown with their output and code, chat-folder downloads, and a `--demo` mode that needs no API key.
 
 - **0.1.2** – Sandbox output is read in a stream and capped at 64 kB per stream; a run that prints more is stopped immediately. Before, the whole output was buffered in the bot before being cut to 4 kB: a measured 400 MB flood took the bot to 1.16 GB of memory (now 17 MB). Timed-out runs now stop their container by name (killing the `docker` client alone left it running).
 

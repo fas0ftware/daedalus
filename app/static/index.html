@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Daedalus</title>
+  <link rel="icon" href="/static/daedalus.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/base.css">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/ui.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <img src="/static/daedalus.svg" alt="" width="28" height="28">
+      <span class="brand__name">Daedalus</span>
+      <span class="brand__tag">coding assistant</span>
+      <span class="pill" id="model"></span>
+      <span class="pill pill--accent" id="demo" hidden>demo: scripted replies, real sandbox</span>
+    </div>
+    <span class="note" id="sandbox"></span>
+  </header>
+  <main class="chat-layout">
+    <nav class="sidebar" aria-label="Chats">
+      <button class="btn btn--primary wide" type="button" id="new">New chat</button>
+      <ol class="chats" id="chats"></ol>
+    </nav>
+    <section class="conversation" aria-label="Conversation">
+      <div class="messages" id="messages" aria-live="polite"></div>
+      <form class="composer" id="composer" novalidate>
+        <textarea name="text" rows="2" placeholder="Ask a coding question… (Enter to send, Shift+Enter for a new line)" aria-label="Message"></textarea>
+        <button class="btn btn--primary" type="submit" id="send">Send</button>
+      </form>
+    </section>
+    <aside class="files panel" aria-labelledby="files-title">
+      <h2 class="panel__title" id="files-title">Chat folder</h2>
+      <ul class="filelist" id="files"></ul>
+      <p class="note">Code runs in Docker: no network, read-only system, 256 MB RAM, half a CPU, never root. Files written to the current folder stay with this chat.</p>
+    </aside>
+  </main>
+</body>
+</html>

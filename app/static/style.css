@@ -1,0 +1,50 @@
+:root { --accent: #f0a35e; }
+@media (prefers-color-scheme: light) { :root { --accent: #b85f12; } }
+
+body { height: 100vh; display: flex; flex-direction: column; }
+.chat-layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 16rem minmax(0, 1fr) 17rem; }
+@media (max-width: 70rem) { .chat-layout { grid-template-columns: 14rem minmax(0, 1fr); } .files { display: none; } }
+@media (max-width: 44rem) { .chat-layout { grid-template-columns: minmax(0, 1fr); } .sidebar { display: none; } .top .pill, .top .note { display: none; } }
+.wide { width: 100%; }
+
+.sidebar { border-right: 1px solid var(--line); padding: 1rem; overflow: auto; background: var(--panel); }
+.chats { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: .25rem; }
+.chats li { display: flex; align-items: center; min-width: 0; }
+.chat-btn { flex: 1; min-width: 0; overflow: hidden; text-align: left; background: none; border: 1px solid transparent; color: var(--text); border-radius: 9px; padding: .5rem .6rem; cursor: pointer; font: inherit; }
+.chat-btn[aria-current=true], .chat-btn:hover { background: var(--panel-2); border-color: var(--line); }
+.chat-btn__title { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .9rem; }
+.chat-del { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 1.1rem; padding: .3rem .4rem; opacity: 0; }
+.chats li:hover .chat-del, .chat-del:focus-visible { opacity: 1; }
+
+.conversation { display: flex; flex-direction: column; min-height: 0; }
+.messages { flex: 1; overflow: auto; padding: 1.5rem clamp(1rem, 4vw, 3rem); display: flex; flex-direction: column; gap: 1.2rem; }
+.msg { display: flex; gap: .8rem; max-width: 52rem; width: 100%; }
+.msg--user { justify-content: flex-end; align-self: flex-end; }
+.msg--user .bubble { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line)); border-radius: 14px 14px 4px 14px; padding: .6rem .9rem; white-space: pre-wrap; max-width: 80%; }
+.msg__avatar { width: 30px; height: 30px; flex: none; margin-top: .2rem; }
+.msg__body { flex: 1; min-width: 0; }
+.msg__meta { margin: .4rem 0 0; font-size: .72rem; }
+.md p { margin: 0 0 .7rem; line-height: 1.6; }
+.md code { font: .85em var(--mono); background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: .05rem .3rem; }
+pre.code { margin: .2rem 0 .8rem; background: #0a0d12; color: #e6edf3; border: 1px solid var(--line); border-radius: 10px; padding: .75rem .9rem; overflow: auto; font: 12.5px/1.55 var(--mono); }
+pre.code code { background: none; border: 0; padding: 0; font: inherit; }
+.typing { color: var(--muted); animation: pulse 1.2s infinite alternate; }
+@keyframes pulse { to { opacity: .4; } }
+
+.run { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); margin: .4rem 0 .7rem; overflow: hidden; }
+.run__head { display: flex; align-items: center; gap: .7rem; padding: .55rem .8rem; font-size: .88rem; }
+.run__head .note { margin-left: auto; }
+.output { background: var(--panel-2); border-radius: 10px; padding: .65rem .85rem; font: 12.5px/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; margin: 0 .8rem .6rem; color: var(--good); }
+.output--bad { color: var(--bad); }
+.run__code summary { cursor: pointer; padding: 0 .8rem .6rem; font-size: .8rem; color: var(--muted); }
+.run__code pre { margin: 0 .8rem .8rem; }
+
+.composer { display: flex; gap: .6rem; padding: .9rem clamp(1rem, 4vw, 3rem) 1.1rem; border-top: 1px solid var(--line); background: var(--panel); }
+.composer textarea { flex: 1; resize: none; }
+.composer .btn { align-self: stretch; padding-inline: 1.4rem; }
+
+.files { border: 0; border-left: 1px solid var(--line); border-radius: 0; overflow: auto; }
+.filelist { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .35rem; }
+.filelist li { display: flex; justify-content: space-between; gap: .5rem; font-size: .88rem; }
+.filelist a { color: var(--accent); font-family: var(--mono); text-decoration: none; word-break: break-all; }
+.filelist a:hover { text-decoration: underline; }

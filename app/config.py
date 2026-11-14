@@ -53,3 +53,22 @@ def load_settings(environ=os.environ) -> Settings:
         workspace=environ.get("DAEDALUS_WORKSPACE", "workspace"),
         requests_per_hour=_int(environ, "DAEDALUS_REQUESTS_PER_HOUR", 30, 1, 10_000),
     )
+
+
+def load_web_settings(environ=os.environ, demo: bool = False) -> Settings:
+    """Settings for the web interface (python -m app.web): no Telegram token or user ids needed."""
+    if not demo and not environ.get("ANTHROPIC_API_KEY"):
+        raise ValueError("Missing ANTHROPIC_API_KEY (or start with --demo to try the interface)")
+    effort = environ.get("CLAUDE_EFFORT", "medium")
+    if effort not in ("low", "medium", "high", "xhigh", "max"):
+        raise ValueError("CLAUDE_EFFORT must be low, medium, high, xhigh or max")
+    # The web interface has no Telegram side: an empty token, not a secret.
+    return Settings(  # nosec B106
+        telegram_token="",
+        allowed_user_ids=frozenset(),
+        model=environ.get("CLAUDE_MODEL", "claude-haiku-5-5"),
+        effort=effort,
+        sandbox_image=environ.get("DAEDALUS_SANDBOX_IMAGE", "daedalus-sandbox"),
+        sandbox_timeout=_int(environ, "DAEDALUS_SANDBOX_TIMEOUT", 20, 1, 600),
+        workspace=environ.get("DAEDALUS_WORKSPACE", "workspace"),
+    )
