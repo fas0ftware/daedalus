@@ -1,7 +1,7 @@
 # Daedalus
 
 [![CI](https://github.com/fas0ftware/daedalus/actions/workflows/ci.yml/badge.svg)](https://github.com/fas0ftware/daedalus/actions/workflows/ci.yml)
-![Version](https://img.shields.io/badge/version-0.1.1-blue)
+![Version](https://img.shields.io/badge/version-0.1.2-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-yellow)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -32,6 +32,7 @@ Telegram ──► owner check, rate limit ──► Agent (Claude Messages API,
 - **Owner only:** messages from users not in `ALLOWED_USER_ID` are ignored and logged.
 - **Sandbox:** no network, read-only root filesystem, no Linux capabilities, `no-new-privileges`, never root, 256 MB RAM (no swap), half a CPU, 64 processes, killed after the timeout; code goes in through stdin, never through a shell. The live check above shows the network blocked, the root filesystem read-only, an endless loop and a 600 MB allocation killed.
 - **Limits:** 30 requests per hour per user (configurable), 8000-character messages, 20 kB code, 4 kB output per run.
+- **Output flood:** the container's memory limit does not cover what it prints into the pipe, so Daedalus reads at most 64 kB of stdout and stderr each; code that prints more is stopped at once (`docker kill` by container name) instead of filling the bot's memory. A run that hits the time limit is stopped the same way, so no container is left behind.
 - The bot token never appears in logs (the HTTP client's request logging is silenced). Keys live only in `.env` (git-ignored).
 
 ## Setup
@@ -79,6 +80,8 @@ sandbox/Dockerfile        sandbox image (Python 3.12, numpy, pandas)
 ```
 
 ## Changelog
+
+- **0.1.2** – Sandbox output is read in a stream and capped at 64 kB per stream; a run that prints more is stopped immediately. Before, the whole output was buffered in the bot before being cut to 4 kB: a measured 400 MB flood took the bot to 1.16 GB of memory (now 17 MB). Timed-out runs now stop their container by name (killing the `docker` client alone left it running).
 
 - **0.1.1** – Fixes: concurrent messages in one chat no longer corrupt the conversation; a failed request no longer breaks the chat; a model that ignores the step limit is stopped; history trimming is accepted by newer models; edited messages no longer crash the handler; numeric settings are validated; workspace is writable when run as root.
 - **0.1.0** – First working version: Telegram bot, Claude agent with a sandboxed Python tool, owner-only access, rate limit, tests, CI. (Before: an empty skeleton.)

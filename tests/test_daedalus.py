@@ -324,3 +324,39 @@ def test_concurrent_messages_in_one_chat_are_serialized(monkeypatch):
     asyncio.run(main())
     assert not overlap[0]
     assert sent.count("ok") == 2
+
+
+def test_output_flood_is_capped_and_the_container_stopped():
+    import sys
+    from app.sandbox import MAX_CAPTURE, capped_run
+    killed = []
+    flood = "import sys\nwhile True: sys.stdout.write('x' * 100000)"
+    r = capped_run([sys.executable, "-c", flood], "", 20, container="daedalus-run-t", kill=killed.append)
+    assert r.overflow and len(r.stdout) == MAX_CAPTURE and killed == ["daedalus-run-t"]
+
+
+def test_capped_run_passes_stdin_and_keeps_both_streams():
+    import sys
+    from app.sandbox import capped_run
+    code = "import sys\nprint(sys.stdin.read().upper())\nprint('warn', file=sys.stderr)\nsys.exit(3)"
+    r = capped_run([sys.executable, "-c", code], "hello", 10, kill=lambda name: None)
+    assert (r.returncode, r.stdout.strip(), r.stderr.strip(), r.overflow) == (3, "HELLO", "warn", False)
+
+
+def test_capped_run_timeout_stops_the_container():
+    import sys
+    import time
+    from app.sandbox import capped_run
+    killed = []
+    started = time.monotonic()
+    with pytest.raises(subprocess.TimeoutExpired):
+        capped_run([sys.executable, "-c", "import time; time.sleep(30)"], "", 0.5, container="c", kill=killed.append)
+    assert killed == ["c"] and time.monotonic() - started < 5
+
+
+def test_flood_message_and_named_container(tmp_path):
+    from app.sandbox import Captured
+    cmd = docker_command("img", str(tmp_path), 20, name="daedalus-run-ab")
+    assert cmd[cmd.index("--name") + 1] == "daedalus-run-ab" and "--name" not in docker_command("img", ".", 20)
+    r = run_python("x", "img", str(tmp_path), 5, runner=lambda *a, **k: Captured(137, "xxx", "", overflow=True))
+    assert "[stopped: the code printed more than 64 kB]" in r.output and not r.timed_out
