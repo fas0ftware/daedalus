@@ -22,6 +22,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace as NS
+from urllib.parse import quote, unquote
 
 from .agent.core import Agent
 from .config import load_web_settings
@@ -158,12 +159,16 @@ def build_app(studio: Studio) -> App:
     @app.get(r"/api/chats/(?P<chat_id>\d{1,6})/files/(?P<name>[^/]{1,100})")
     def download(query, chat_id, name):
         chat = studio.chat(chat_id)
+        name = unquote(name)  # the page sends encodeURIComponent(name): "çıktı.txt" arrives as %C3%A7...
         if not NAME_RE.fullmatch(name) or name.startswith("."):
             raise HttpError(404, "not found")
         path = Path(chat.workdir) / name
         if not path.is_file() or path.is_symlink() or path.resolve().parent != Path(chat.workdir).resolve():
             raise HttpError(404, "not found")
-        return path.read_bytes(), "application/octet-stream", {"Content-Disposition": f'attachment; filename="{name}"'}
+        # HTTP headers are Latin-1 only: an ASCII fallback name plus the real one in RFC 5987 form
+        plain = re.sub(r"[^A-Za-z0-9._-]+", "_", name.encode("ascii", "replace").decode()) or "file"
+        return path.read_bytes(), "application/octet-stream", {
+            "Content-Disposition": f"attachment; filename=\"{plain}\"; filename*=UTF-8''{quote(name)}"}
 
     return app
 

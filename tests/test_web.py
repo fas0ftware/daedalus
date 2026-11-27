@@ -5,6 +5,7 @@ import http.client
 import json
 import socket
 import threading
+from pathlib import Path
 from http.server import ThreadingHTTPServer
 from types import SimpleNamespace as NS
 
@@ -137,6 +138,11 @@ class TestHttp:
         assert status == 200 and json.loads(data)["files"] == [{"name": "out.txt", "bytes": 5}]
         status, data = self.call("GET", f"/api/chats/{chat_id}/files/out.txt")
         assert (status, data) == (200, b"hello")
+        # a Turkish file name (the page sends it percent-encoded; headers must stay Latin-1)
+        workdir = Path(self.studio.chat(chat_id).workdir)
+        (workdir / "çıktı.txt").write_text("merhaba", encoding="utf-8")
+        status, data = self.call("GET", f"/api/chats/{chat_id}/files/%C3%A7%C4%B1kt%C4%B1.txt")
+        assert (status, data) == (200, "merhaba".encode())
         for name in ("..%2F..%2Fsecret", ".hidden", "nope.txt", "a%00b"):
             assert self.call("GET", f"/api/chats/{chat_id}/files/{name}")[0] == 404, name
         assert self.call("GET", "/api/chats/999")[0] == 404
